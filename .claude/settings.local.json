@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/abhirampurohit/Documents/ThunderBolts/Seattle-Thunderbolts reset HEAD lib/.supabase.ts.swp)"
+    ]
+  }
+}
