@@ -7,8 +7,11 @@ import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 // (1–4) and right (5–8) columns.
 const RIGHT_COL_OFFSET = 5;
 
-// Lanes 5 and 6 are Australian turf; highlight the strip above them.
+// Lanes 5 and 6 are Australian turf; highlight the top of those bars.
 const AUS_TURF_COLOR = '#C9A87C';
+
+// Lanes 2 and 3 get a dark-blue section on the top of the bar.
+const LANE_23_COLOR = '#1E3A8A';
 
 import { BrandHeader } from '@/components/brand-header';
 import { brand } from '@/constants/brand';
@@ -90,10 +93,16 @@ export default function MapScreen() {
             const fill = busy ? brand.busy : brand.available;
             const x = lane.id >= 5 ? lane.layout_x + RIGHT_COL_OFFSET : lane.layout_x;
             const isAusTurf = lane.id === 5 || lane.id === 6;
-            // Tan strip sits just below the lane-number label and covers
-            // the top quarter of the bar.
-            const ausY = lane.layout_y + 9;
-            const ausH = lane.layout_h / 4;
+            const isLane23 = lane.id === 2 || lane.id === 3;
+            // Surface strip sits just below the lane-number label and
+            // covers the top quarter of the bar.
+            const stripY = lane.layout_y + 9;
+            const stripH = lane.layout_h / 4;
+            const stripColor = isAusTurf
+              ? AUS_TURF_COLOR
+              : isLane23
+                ? LANE_23_COLOR
+                : null;
             return (
               <React.Fragment key={lane.id}>
                 <Rect
@@ -108,13 +117,13 @@ export default function MapScreen() {
                   strokeWidth={0.4}
                   onPress={() => router.push(`/lane/${lane.id}`)}
                 />
-                {isAusTurf ? (
+                {stripColor ? (
                   <Rect
                     x={x}
-                    y={ausY}
+                    y={stripY}
                     width={lane.layout_w}
-                    height={ausH}
-                    fill={AUS_TURF_COLOR}
+                    height={stripH}
+                    fill={stripColor}
                     opacity={0.95}
                     onPress={() => router.push(`/lane/${lane.id}`)}
                   />
