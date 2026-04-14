@@ -24,3 +24,24 @@ export async function createPaymentIntent(params: {
 export function formatUsd(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }
+
+export type MembershipIntentResponse = {
+  client_secret: string;
+  payment_intent_id: string;
+  amount_cents: number;
+  tier_id: string;
+  tier_name: string;
+  period_days: number;
+};
+
+export async function createMembershipIntent(params: {
+  tier_id: string;
+}): Promise<MembershipIntentResponse> {
+  const { data, error } = await supabase.functions.invoke<MembershipIntentResponse>(
+    'create-membership-intent',
+    { body: params }
+  );
+  if (error) throw error;
+  if (!data?.client_secret) throw new Error('No client_secret returned');
+  return data;
+}

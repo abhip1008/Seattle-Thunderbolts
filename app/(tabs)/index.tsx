@@ -3,6 +3,13 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 
+// Offset added to lanes 5–8 so there is a visible aisle between the left
+// (1–4) and right (5–8) columns.
+const RIGHT_COL_OFFSET = 5;
+
+// Lanes 5 and 6 are Australian turf; highlight the strip above them.
+const AUS_TURF_COLOR = '#C9A87C';
+
 import { BrandHeader } from '@/components/brand-header';
 import { brand } from '@/constants/brand';
 import { supabase } from '@/lib/supabase';
@@ -66,11 +73,42 @@ export default function MapScreen() {
         <Svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" height={300}>
           <Rect x={0} y={0} width={MAP_W} height={MAP_H} fill={brand.surface} />
 
-          {/* Aisle divider */}
+          {/* Australian turf strip above lanes 5 and 6. */}
+          {(() => {
+            const five = lanes.find((l) => l.id === 5);
+            const six = lanes.find((l) => l.id === 6);
+            if (!five || !six) return null;
+            const x = five.layout_x + RIGHT_COL_OFFSET;
+            const width = six.layout_x + RIGHT_COL_OFFSET + six.layout_w - x;
+            return (
+              <>
+                <Rect
+                  x={x}
+                  y={3}
+                  width={width}
+                  height={6}
+                  rx={1}
+                  fill={AUS_TURF_COLOR}
+                  opacity={0.85}
+                />
+                <SvgText
+                  x={x + width / 2}
+                  y={7.5}
+                  fontSize={3}
+                  fontWeight="bold"
+                  fill="#2B1E0F"
+                  textAnchor="middle">
+                  AUSTRALIAN TURF
+                </SvgText>
+              </>
+            );
+          })()}
+
+          {/* Aisle divider (wider after the extra gap). */}
           <Line
-            x1={50}
+            x1={50 + RIGHT_COL_OFFSET / 2}
             y1={22}
-            x2={50}
+            x2={50 + RIGHT_COL_OFFSET / 2}
             y2={78}
             stroke={brand.border}
             strokeWidth={0.6}
@@ -81,10 +119,11 @@ export default function MapScreen() {
           {lanes.map((lane) => {
             const busy = busyLaneIds.has(lane.id);
             const fill = busy ? brand.busy : brand.available;
+            const x = lane.id >= 5 ? lane.layout_x + RIGHT_COL_OFFSET : lane.layout_x;
             return (
               <Rect
                 key={lane.id}
-                x={lane.layout_x}
+                x={x}
                 y={lane.layout_y}
                 width={lane.layout_w}
                 height={lane.layout_h}
@@ -99,33 +138,39 @@ export default function MapScreen() {
           })}
 
           {/* Lane number labels */}
-          {lanes.map((lane) => (
-            <SvgText
-              key={`num-${lane.id}`}
-              x={lane.layout_x + lane.layout_w / 2}
-              y={lane.layout_y + 6}
-              fontSize={4.5}
-              fontWeight="bold"
-              fill="white"
-              textAnchor="middle">
-              {lane.id}
-            </SvgText>
-          ))}
+          {lanes.map((lane) => {
+            const x = lane.id >= 5 ? lane.layout_x + RIGHT_COL_OFFSET : lane.layout_x;
+            return (
+              <SvgText
+                key={`num-${lane.id}`}
+                x={x + lane.layout_w / 2}
+                y={lane.layout_y + 6}
+                fontSize={4.5}
+                fontWeight="bold"
+                fill="white"
+                textAnchor="middle">
+                {lane.id}
+              </SvgText>
+            );
+          })}
 
           {/* Type badge: M = bowling machine, N = net */}
-          {lanes.map((lane) => (
-            <SvgText
-              key={`tag-${lane.id}`}
-              x={lane.layout_x + lane.layout_w / 2}
-              y={lane.layout_y + lane.layout_h - 2}
-              fontSize={3.2}
-              fontWeight="bold"
-              fill="white"
-              opacity={0.85}
-              textAnchor="middle">
-              {lane.kind === 'bowling_machine' ? 'M' : 'NET'}
-            </SvgText>
-          ))}
+          {lanes.map((lane) => {
+            const x = lane.id >= 5 ? lane.layout_x + RIGHT_COL_OFFSET : lane.layout_x;
+            return (
+              <SvgText
+                key={`tag-${lane.id}`}
+                x={x + lane.layout_w / 2}
+                y={lane.layout_y + lane.layout_h - 2}
+                fontSize={3.2}
+                fontWeight="bold"
+                fill="white"
+                opacity={0.85}
+                textAnchor="middle">
+                {lane.kind === 'bowling_machine' ? 'M' : 'NET'}
+              </SvgText>
+            );
+          })}
         </Svg>
       </View>
 
@@ -145,6 +190,10 @@ export default function MapScreen() {
         <View style={styles.legendItem}>
           <Text style={styles.legendBadge}>NET</Text>
           <Text style={styles.legendText}>Regular net</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.swatch, { backgroundColor: AUS_TURF_COLOR }]} />
+          <Text style={styles.legendText}>Australian turf (5 & 6)</Text>
         </View>
       </View>
 

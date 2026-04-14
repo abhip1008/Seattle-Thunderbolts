@@ -42,6 +42,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="lane/[id]" options={{ title: 'Book Lane' }} />
             <Stack.Screen name="event/[id]" options={{ title: 'Event' }} />
+            <Stack.Screen name="membership" options={{ title: 'Membership' }} />
           </Stack>
           <StatusBar style="light" />
         </ThemeProvider>

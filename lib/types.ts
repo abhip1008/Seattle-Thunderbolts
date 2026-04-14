@@ -33,3 +33,24 @@ export type EventItem = {
   location: string | null;
   image_url: string | null;
 };
+
+export type MembershipTier = {
+  id: string;
+  name: string;
+  price_cents: number;
+  period_days: number;
+  perks: string[];
+  sort_order: number;
+};
+
+export type Membership = {
+  id: string;
+  user_id: string;
+  tier_id: string;
+  status: 'active' | 'cancelled' | 'expired';
+  valid_from: string;
+  valid_until: string;
+  amount_cents: number;
+  payment_intent_id: string | null;
+  created_at: string;
+};
