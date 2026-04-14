@@ -43,6 +43,8 @@ export default function RootLayout() {
             <Stack.Screen name="lane/[id]" options={{ title: 'Book Lane' }} />
             <Stack.Screen name="event/[id]" options={{ title: 'Event' }} />
             <Stack.Screen name="membership" options={{ title: 'Membership' }} />
+            <Stack.Screen name="listing/[id]" options={{ title: 'Listing' }} />
+            <Stack.Screen name="listing/new" options={{ title: 'List an item' }} />
           </Stack>
           <StatusBar style="light" />
         </ThemeProvider>

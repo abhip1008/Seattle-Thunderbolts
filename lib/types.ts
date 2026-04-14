@@ -43,6 +43,21 @@ export type MembershipTier = {
   sort_order: number;
 };
 
+export type Listing = {
+  id: string;
+  seller_type: 'store' | 'community';
+  seller_id: string | null;
+  title: string;
+  description: string | null;
+  category: string | null;
+  price_cents: number;
+  condition: 'new' | 'like_new' | 'good' | 'used' | null;
+  image_url: string | null;
+  status: 'active' | 'sold' | 'removed';
+  contact: string | null;
+  created_at: string;
+};
+
 export type Membership = {
   id: string;
   user_id: string;
