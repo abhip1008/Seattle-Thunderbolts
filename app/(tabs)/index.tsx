@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 
@@ -73,37 +73,6 @@ export default function MapScreen() {
         <Svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" height={300}>
           <Rect x={0} y={0} width={MAP_W} height={MAP_H} fill={brand.surface} />
 
-          {/* Australian turf strip above lanes 5 and 6. */}
-          {(() => {
-            const five = lanes.find((l) => l.id === 5);
-            const six = lanes.find((l) => l.id === 6);
-            if (!five || !six) return null;
-            const x = five.layout_x + RIGHT_COL_OFFSET;
-            const width = six.layout_x + RIGHT_COL_OFFSET + six.layout_w - x;
-            return (
-              <>
-                <Rect
-                  x={x}
-                  y={3}
-                  width={width}
-                  height={6}
-                  rx={1}
-                  fill={AUS_TURF_COLOR}
-                  opacity={0.85}
-                />
-                <SvgText
-                  x={x + width / 2}
-                  y={7.5}
-                  fontSize={3}
-                  fontWeight="bold"
-                  fill="#2B1E0F"
-                  textAnchor="middle">
-                  AUSTRALIAN TURF
-                </SvgText>
-              </>
-            );
-          })()}
-
           {/* Aisle divider (wider after the extra gap). */}
           <Line
             x1={50 + RIGHT_COL_OFFSET / 2}
@@ -120,20 +89,37 @@ export default function MapScreen() {
             const busy = busyLaneIds.has(lane.id);
             const fill = busy ? brand.busy : brand.available;
             const x = lane.id >= 5 ? lane.layout_x + RIGHT_COL_OFFSET : lane.layout_x;
+            const isAusTurf = lane.id === 5 || lane.id === 6;
+            // Tan strip sits just below the lane-number label and covers
+            // the top quarter of the bar.
+            const ausY = lane.layout_y + 9;
+            const ausH = lane.layout_h / 4;
             return (
-              <Rect
-                key={lane.id}
-                x={x}
-                y={lane.layout_y}
-                width={lane.layout_w}
-                height={lane.layout_h}
-                rx={1.5}
-                fill={fill}
-                opacity={0.9}
-                stroke={brand.border}
-                strokeWidth={0.4}
-                onPress={() => router.push(`/lane/${lane.id}`)}
-              />
+              <React.Fragment key={lane.id}>
+                <Rect
+                  x={x}
+                  y={lane.layout_y}
+                  width={lane.layout_w}
+                  height={lane.layout_h}
+                  rx={1.5}
+                  fill={fill}
+                  opacity={0.9}
+                  stroke={brand.border}
+                  strokeWidth={0.4}
+                  onPress={() => router.push(`/lane/${lane.id}`)}
+                />
+                {isAusTurf ? (
+                  <Rect
+                    x={x}
+                    y={ausY}
+                    width={lane.layout_w}
+                    height={ausH}
+                    fill={AUS_TURF_COLOR}
+                    opacity={0.95}
+                    onPress={() => router.push(`/lane/${lane.id}`)}
+                  />
+                ) : null}
+              </React.Fragment>
             );
           })}
 
