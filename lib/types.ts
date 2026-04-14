@@ -8,6 +8,7 @@ export type Lane = {
   layout_y: number;
   layout_w: number;
   layout_h: number;
+  price_cents: number;
 };
 
 export type Booking = {
@@ -18,6 +19,9 @@ export type Booking = {
   ends_at: string;
   status: 'confirmed' | 'cancelled';
   created_at: string;
+  amount_cents: number | null;
+  payment_intent_id: string | null;
+  payment_status: 'unpaid' | 'paid' | 'refunded' | 'failed';
 };
 
 export type EventItem = {

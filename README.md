@@ -1,4 +1,35 @@
-# Welcome to your Expo app 👋
+# Seattle Thunderbolts
+
+Expo + Supabase app for the Thunderbolts Cricket Academy.
+
+## Payments (Stripe)
+
+Booking a lane runs a Stripe PaymentSheet before the booking row is inserted.
+
+**One-time setup:**
+
+1. Create a Stripe account → grab your publishable key and secret key.
+2. Put the publishable key in `.env`:
+   ```
+   EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   ```
+3. Run the SQL migration `supabase/004_payments.sql` in the Supabase SQL editor.
+4. Deploy the Edge Function and set the secret:
+   ```bash
+   supabase functions deploy create-payment-intent
+   supabase secrets set STRIPE_SECRET_KEY=sk_test_...
+   ```
+5. `@stripe/stripe-react-native` is a native module, so **Expo Go will not work**.
+   Use a development build:
+   ```bash
+   npx expo prebuild
+   npx expo run:ios      # or: npx expo run:android
+   ```
+
+Per-lane pricing lives in `lanes.price_cents`; the Edge Function reads it
+server-side so the client cannot choose its own price.
+
+---
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 

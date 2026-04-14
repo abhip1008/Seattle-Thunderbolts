@@ -1,4 +1,5 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useStripe } from '@stripe/stripe-react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
 
 import { brand } from '@/constants/brand';
 import { useAuth } from '@/lib/auth';
+import { createPaymentIntent, formatUsd } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import type { Booking, Lane } from '@/lib/types';
 
@@ -49,6 +51,7 @@ export default function LaneBooking() {
   const laneId = Number(id);
   const navigation = useNavigation();
   const { session } = useAuth();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const [lane, setLane] = useState<Lane | null>(null);
   const [date, setDate] = useState(new Date());
@@ -100,20 +103,56 @@ export default function LaneBooking() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from('bookings').insert({
-      user_id: session.user.id,
-      lane_id: laneId,
-      starts_at: start.toISOString(),
-      ends_at: end.toISOString(),
-    });
-    setSubmitting(false);
-    if (error) {
-      Alert.alert('Could not book', error.message);
-      return;
+    try {
+      const intent = await createPaymentIntent({
+        lane_id: laneId,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+      });
+
+      const init = await initPaymentSheet({
+        merchantDisplayName: 'Seattle Thunderbolts',
+        paymentIntentClientSecret: intent.client_secret,
+        allowsDelayedPaymentMethods: false,
+        defaultBillingDetails: { email: session.user.email ?? undefined },
+      });
+      if (init.error) throw new Error(init.error.message);
+
+      const result = await presentPaymentSheet();
+      if (result.error) {
+        if (result.error.code !== 'Canceled') {
+          Alert.alert('Payment failed', result.error.message);
+        }
+        return;
+      }
+
+      const { error } = await supabase.from('bookings').insert({
+        user_id: session.user.id,
+        lane_id: laneId,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        amount_cents: intent.amount_cents,
+        payment_intent_id: intent.payment_intent_id,
+        payment_status: 'paid',
+      });
+      if (error) {
+        Alert.alert(
+          'Payment succeeded but booking failed',
+          `${error.message}\n\nContact us with payment id ${intent.payment_intent_id} and we will sort it out.`
+        );
+        return;
+      }
+
+      Alert.alert(
+        'Booked',
+        `${lane?.name} at ${fmtTime(start)} · ${formatUsd(intent.amount_cents)}`,
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)/bookings') }]
+      );
+    } catch (e: any) {
+      Alert.alert('Could not book', e?.message ?? 'Unknown error');
+    } finally {
+      setSubmitting(false);
     }
-    Alert.alert('Booked', `${lane?.name} at ${fmtTime(start)}`, [
-      { text: 'OK', onPress: () => router.replace('/(tabs)/bookings') },
-    ]);
   }
 
   if (loading || !lane) {
@@ -173,10 +212,10 @@ export default function LaneBooking() {
               onPress={() =>
                 Alert.alert(
                   'Confirm booking',
-                  `${lane.name} · ${fmtTime(start)} – ${fmtTime(end)}`,
+                  `${lane.name} · ${fmtTime(start)} – ${fmtTime(end)}\n${formatUsd(lane.price_cents)}`,
                   [
                     { text: 'Cancel', style: 'cancel' },
-                    { text: 'Book', onPress: () => book(start, end) },
+                    { text: 'Pay & book', onPress: () => book(start, end) },
                   ]
                 )
               }
